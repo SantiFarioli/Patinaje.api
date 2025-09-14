@@ -1,0 +1,6 @@
+@Patinaje.API_HostAddress = http://localhost:5100
+
+GET {{Patinaje.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
