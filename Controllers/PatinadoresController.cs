@@ -11,6 +11,7 @@ public class PatinadoresController : ControllerBase
     private readonly AppPatinContext _db;
     public PatinadoresController(AppPatinContext db) => _db = db;
 
+    // DTOs de entrada
     public record CreatePatinadorDto(
         string Nombre,
         string Apellido,
@@ -39,7 +40,42 @@ public class PatinadoresController : ControllerBase
         int? ClubId
     );
 
-    // GET /api/patinadores?search=&categoria=&activo=true&page=1&pageSize=20
+    // DTO de salida (listado)
+    public record PatinadorListDto(
+        int PatinadorId,
+        string Nombre,
+        string Apellido,
+        string Categoria,
+        bool Activo
+    );
+
+    // DTO de detalle
+    public record PatinadorDetailDto(
+        int PatinadorId,
+        string Nombre,
+        string Apellido,
+        DateTime FechaNacimiento,
+        string Categoria,
+        bool Activo,
+        string? FichaMedica,
+        bool AsisteGimnasio,
+        bool AsisteNutricionista,
+        bool AsistePsicologo,
+        int ProfesorId,
+        string ProfesorNombre,
+        int? ClubId,
+        string? ClubNombre
+    );
+
+    // DTO paginado
+    public record PagedResult<T>(
+        int TotalItems,
+        int Page,
+        int PageSize,
+        IEnumerable<T> Data
+    );
+
+    // GET /api/patinadores
     [HttpGet]
     public async Task<IActionResult> Get(
         [FromQuery] string? search,
@@ -48,10 +84,18 @@ public class PatinadoresController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
+        if (page <= 0 || pageSize <= 0)
+            return BadRequest("Parámetros de paginación inválidos.");
+
         var q = _db.Patinadores.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
-            q = q.Where(p => p.Nombre.Contains(search) || p.Apellido.Contains(search));
+        {
+            var term = search.ToLower();
+            q = q.Where(p =>
+                p.Nombre.ToLower().Contains(term) ||
+                p.Apellido.ToLower().Contains(term));
+        }
 
         if (!string.IsNullOrWhiteSpace(categoria))
             q = q.Where(p => p.Categoria == categoria);
@@ -60,21 +104,54 @@ public class PatinadoresController : ControllerBase
             q = q.Where(p => p.Activo == activo.Value);
 
         var total = await q.CountAsync();
+
         var data = await q
             .OrderBy(p => p.Apellido).ThenBy(p => p.Nombre)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Select(p => new PatinadorListDto(
+                p.PatinadorId,
+                p.Nombre,
+                p.Apellido,
+                p.Categoria,
+                p.Activo
+            ))
             .ToListAsync();
 
-        return Ok(new { total, page, pageSize, data });
+        var result = new PagedResult<PatinadorListDto>(
+            total, page, pageSize, data
+        );
+
+        return Ok(result);
     }
 
     // GET /api/patinadores/1
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var p = await _db.Patinadores.FindAsync(id);
-        return p is null ? NotFound() : Ok(p);
+        var p = await _db.Patinadores
+            .Include(p => p.Profesor)
+            .Include(p => p.Club)
+            .Where(p => p.PatinadorId == id)
+            .Select(p => new PatinadorDetailDto(
+                p.PatinadorId,
+                p.Nombre,
+                p.Apellido,
+                p.FechaNacimiento,
+                p.Categoria,
+                p.Activo,
+                p.FichaMedica,
+                p.AsisteGimnasio,
+                p.AsisteNutricionista,
+                p.AsistePsicologo,
+                p.ProfesorId,
+                p.Profesor.Nombre + " " + p.Profesor.Apellido,
+                p.ClubId,
+                p.Club != null ? p.Club.Nombre : null
+            ))
+            .FirstOrDefaultAsync();
+
+        return p is null ? NotFound("Patinador no encontrado.") : Ok(p);
     }
 
     // POST /api/patinadores
