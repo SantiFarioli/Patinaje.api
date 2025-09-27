@@ -64,7 +64,8 @@ public class PatinadoresController : ControllerBase
         int ProfesorId,
         string ProfesorNombre,
         int? ClubId,
-        string? ClubNombre
+        string? ClubNombre,
+        List<TutorDto> Tutores // 👈 NUEVO
     );
 
     // DTO paginado
@@ -73,6 +74,16 @@ public class PatinadoresController : ControllerBase
         int Page,
         int PageSize,
         IEnumerable<T> Data
+    );
+
+
+    public record TutorDto(
+        int TutorId,
+        string Nombre,
+        string Apellido,
+        string? Telefono,
+        string? Email,
+        string? Relacion
     );
 
     // GET /api/patinadores
@@ -147,11 +158,20 @@ public class PatinadoresController : ControllerBase
                 p.ProfesorId,
                 p.Profesor.Nombre + " " + p.Profesor.Apellido,
                 p.ClubId,
-                p.Club != null ? p.Club.Nombre : null
-            ))
-            .FirstOrDefaultAsync();
+                p.Club != null ? p.Club.Nombre : null,
+                p.Tutores.Select(tp => new TutorDto(   // 👈 acá proyectamos los tutores
+                tp.TutorId,
+                tp.Tutor.Nombre,
+                tp.Tutor.Apellido,
+                tp.Tutor.Telefono,
+                tp.Tutor.Email,
+                tp.Tutor.Relacion
+            )).ToList()
+        ))
+        .FirstOrDefaultAsync();
 
-        return p is null ? NotFound("Patinador no encontrado.") : Ok(p);
+    return p is null ? NotFound("Patinador no encontrado.") : Ok(p);
+
     }
 
     // POST /api/patinadores
