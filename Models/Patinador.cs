@@ -10,9 +10,13 @@ namespace Patinaje.API.Models
         public int PatinadorId { get; set; }
         public string Nombre { get; set; } = null!;
         public string Apellido { get; set; } = null!;
+        public string? Dni { get; set; }
         public DateTime FechaNacimiento { get; set; }
+        public string? Domicilio { get; set; }
+        public string? FotoUrl { get; set; }
         public string Categoria { get; set; } = null!;
         public bool Activo { get; set; } = true;
+        
 
         // Salud básica (extenderemos luego)
         public string? FichaMedica { get; set; }

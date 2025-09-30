@@ -11,8 +11,8 @@ public class TutoresController : ControllerBase
     private readonly AppPatinContext _db;
     public TutoresController(AppPatinContext db) => _db = db;
 
-    public record TutorCreateDto(string Nombre, string Apellido, string? Telefono, string? Email, string? Relacion);
-    public record TutorUpdateDto(string Nombre, string Apellido, string? Telefono, string? Email, string? Relacion);
+    public record TutorCreateDto(string Nombre, string Apellido, string? Telefono, string? Email, string? Relacion, string? Dni, string? Domicilio);
+    public record TutorUpdateDto(string Nombre, string Apellido, string? Telefono, string? Email, string? Relacion, string? Dni, string? Domicilio);
 
     [HttpGet]
     public async Task<IActionResult> Get([FromQuery] string? q)
@@ -41,7 +41,9 @@ public class TutoresController : ControllerBase
             Apellido = dto.Apellido,
             Telefono = dto.Telefono,
             Email = dto.Email,
-            Relacion = dto.Relacion
+            Relacion = dto.Relacion,
+            Dni = dto.Dni,
+            Domicilio = dto.Domicilio
         };
         _db.Tutores.Add(t);
         await _db.SaveChangesAsync();
@@ -59,6 +61,8 @@ public class TutoresController : ControllerBase
         t.Telefono = dto.Telefono;
         t.Email = dto.Email;
         t.Relacion = dto.Relacion;
+        t.Dni = dto.Dni;
+        t.Domicilio = dto.Domicilio;
 
         await _db.SaveChangesAsync();
         return NoContent();
@@ -74,4 +78,3 @@ public class TutoresController : ControllerBase
         return NoContent();
     }
 }
-    
