@@ -16,7 +16,7 @@ namespace Patinaje.API.Models
         public string? FotoUrl { get; set; }
         public string Categoria { get; set; } = null!;
         public bool Activo { get; set; } = true;
-        
+
 
         // Salud básica (extenderemos luego)
         public string? FichaMedica { get; set; }
@@ -33,5 +33,9 @@ namespace Patinaje.API.Models
 
         // M:N con Tutor
         public ICollection<TutorPatinador> Tutores { get; set; } = new List<TutorPatinador>();
+        public ICollection<Asistencia> Asistencias { get; set; } = new List<Asistencia>();
+        public ICollection<Pago> Pagos { get; set; } = new List<Pago>();
+        public ICollection<EvaluacionTecnica> Evaluaciones { get; set; } = new List<EvaluacionTecnica>();
+        
     }
 }

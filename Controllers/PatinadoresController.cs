@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -73,6 +74,29 @@ public class PatinadoresController : ControllerBase
         string? Relacion
     );
 
+    public record AsistenciaDto(
+    int AsistenciaId,
+    DateTime FechaClase,
+    bool Presente
+    );
+
+    public record PagoDto(
+        int PagoId,
+        string Concepto,
+        decimal Monto,
+        string Estado,
+        DateTime? FechaVencimiento,
+        DateTime? FechaPago
+    );
+
+    public record EvaluacionDto(
+        int EvaluacionId,
+        string Elemento,
+        DateTime Fecha,
+        int Puntaje,
+        string? Observaciones
+    );
+
     public record PatinadorDetailDto(
         int PatinadorId,
         string Nombre,
@@ -91,7 +115,10 @@ public class PatinadoresController : ControllerBase
         string ProfesorNombre,
         int? ClubId,
         string? ClubNombre,
-        List<TutorDto> Tutores
+        List<TutorDto> Tutores,
+        List<AsistenciaDto> Asistencias,
+        List<PagoDto> Pagos,
+        List<EvaluacionDto> Evaluaciones
     );
 
     public record PagedResult<T>(int TotalItems, int Page, int PageSize, IEnumerable<T> Data);
@@ -135,46 +162,70 @@ public class PatinadoresController : ControllerBase
 
     // ===== GET detail =====
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetById(int id)
-    {
-        var p = await _db.Patinadores
-            .Include(x => x.Profesor)
-            .Include(x => x.Club)
-            .Include(x => x.Tutores).ThenInclude(tp => tp.Tutor)
-            .Where(x => x.PatinadorId == id)
-            .Select(p => new PatinadorDetailDto(
-                p.PatinadorId,
-                p.Nombre,
-                p.Apellido,
-                p.FechaNacimiento,
-                p.Categoria,
-                p.Activo,
-                p.Dni,
-                p.Domicilio,
-                p.FotoUrl,
-                p.FichaMedica,
-                p.AsisteGimnasio,
-                p.AsisteNutricionista,
-                p.AsistePsicologo,
-                p.ProfesorId,
-                p.Profesor.Nombre + " " + p.Profesor.Apellido,
-                p.ClubId,
-                p.Club != null ? p.Club.Nombre : null,
-                p.Tutores.Select(tp => new TutorDto(
-                    tp.TutorId,
-                    tp.Tutor.Nombre,
-                    tp.Tutor.Apellido,
-                    tp.Tutor.Dni,
-                    tp.Tutor.Domicilio,
-                    tp.Tutor.Telefono,
-                    tp.Tutor.Email,
-                    tp.Tutor.Relacion
-                )).ToList()
-            ))
-            .FirstOrDefaultAsync();
+public async Task<IActionResult> GetById(int id)
+{
+    var p = await _db.Patinadores
+        .Include(x => x.Profesor)
+        .Include(x => x.Club)
+        .Include(x => x.Tutores).ThenInclude(tp => tp.Tutor)
+        .Include(x => x.Asistencias)
+        .Include(x => x.Pagos)
+        .Include(x => x.Evaluaciones)
+        .Where(x => x.PatinadorId == id)
+        .Select(p => new PatinadorDetailDto(
+            p.PatinadorId,
+            p.Nombre,
+            p.Apellido,
+            p.FechaNacimiento,
+            p.Categoria,
+            p.Activo,
+            p.Dni,
+            p.Domicilio,
+            p.FotoUrl,
+            p.FichaMedica,
+            p.AsisteGimnasio,
+            p.AsisteNutricionista,
+            p.AsistePsicologo,
+            p.ProfesorId,
+            p.Profesor.Nombre + " " + p.Profesor.Apellido,
+            p.ClubId,
+            p.Club != null ? p.Club.Nombre : null,
+            p.Tutores.Select(tp => new TutorDto(
+                tp.TutorId,
+                tp.Tutor.Nombre,
+                tp.Tutor.Apellido,
+                tp.Tutor.Dni,
+                tp.Tutor.Domicilio,
+                tp.Tutor.Telefono,
+                tp.Tutor.Email,
+                tp.Tutor.Relacion
+            )).ToList(),
+            p.Asistencias.Select(a => new AsistenciaDto(
+                a.AsistenciaId,
+                a.FechaClase,
+                a.Presente
+            )).ToList(),
+            p.Pagos.Select(pg => new PagoDto(
+                pg.PagoId,
+                pg.Concepto,
+                pg.Monto,
+                pg.Estado,
+                pg.FechaVencimiento,
+                pg.FechaPago
+            )).ToList(),
+            p.Evaluaciones.Select(ev => new EvaluacionDto(
+                ev.EvaluacionTecnicaId,
+                ev.Elemento,
+                ev.Fecha,
+                ev.Puntaje,
+                ev.Observaciones
+            )).ToList()
+        ))
+        .FirstOrDefaultAsync();
 
-        return p is null ? NotFound("Patinador no encontrado") : Ok(p);
-    }
+    return p is null ? NotFound("Patinador no encontrado") : Ok(p);
+}
+
 
     // ===== POST =====
     [HttpPost]
