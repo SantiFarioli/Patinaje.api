@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+using System.ComponentModel.DataAnnotations;
 namespace Patinaje.API.Models
 {
     public class InscripcionTorneo
@@ -18,9 +19,13 @@ namespace Patinaje.API.Models
         public Patinador Patinador { get; set; } = null!;
 
         // Datos adicionales
+        [MaxLength(300)]
         public string CategoriaCompetencia { get; set; } = null!;
         public decimal CostoInscripcion { get; set; }
+        
+        [MaxLength(300)]
         public string EstadoPago { get; set; } = "Pendiente"; // Pendiente, Pagado
+        [MaxLength(300)]
         public string? Resultado { get; set; } // Puesto o puntaje
     }
 }

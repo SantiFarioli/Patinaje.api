@@ -5,14 +5,15 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Patinaje.API.Data;
 
 #nullable disable
 
 namespace Patinaje.API.Migrations
 {
     [DbContext(typeof(AppPatinContext))]
-    [Migration("20250930003956_AddCamposExtra")]
-    partial class AddCamposExtra
+    [Migration("20251023012209_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -45,7 +46,7 @@ namespace Patinaje.API.Migrations
 
                     b.HasIndex("PatinadorId");
 
-                    b.ToTable("Asistencias");
+                    b.ToTable("Asistencias", (string)null);
                 });
 
             modelBuilder.Entity("Patinaje.API.Models.Club", b =>
@@ -57,18 +58,55 @@ namespace Patinaje.API.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ClubId"));
 
                     b.Property<string>("Direccion")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("Telefono")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
 
                     b.HasKey("ClubId");
 
-                    b.ToTable("Clubes");
+                    b.ToTable("Clubes", (string)null);
+                });
+
+            modelBuilder.Entity("Patinaje.API.Models.DetalleElemento", b =>
+                {
+                    b.Property<int>("DetalleElementoId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("DetalleElementoId"));
+
+                    b.Property<string>("CategoriaElemento")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("Elemento")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<int>("EvaluacionTorneoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<int>("Puntaje")
+                        .HasColumnType("int");
+
+                    b.HasKey("DetalleElementoId");
+
+                    b.HasIndex("EvaluacionTorneoId");
+
+                    b.ToTable("DetallesElementos", (string)null);
                 });
 
             modelBuilder.Entity("Patinaje.API.Models.EvaluacionTecnica", b =>
@@ -81,13 +119,15 @@ namespace Patinaje.API.Migrations
 
                     b.Property<string>("Elemento")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Observaciones")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<int>("PatinadorId")
                         .HasColumnType("int");
@@ -95,14 +135,45 @@ namespace Patinaje.API.Migrations
                     b.Property<int>("Puntaje")
                         .HasColumnType("int");
 
-                    b.Property<string>("VideoUrl")
-                        .HasColumnType("longtext");
-
                     b.HasKey("EvaluacionTecnicaId");
 
                     b.HasIndex("PatinadorId");
 
-                    b.ToTable("Evaluaciones");
+                    b.ToTable("EvaluacionesTecnicas", (string)null);
+                });
+
+            modelBuilder.Entity("Patinaje.API.Models.EvaluacionTorneo", b =>
+                {
+                    b.Property<int>("EvaluacionTorneoId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("EvaluacionTorneoId"));
+
+                    b.Property<string>("ArchivoPdfUrl")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<DateTime>("FechaEvaluacion")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ObservacionesGenerales")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<int>("PatinadorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TorneoId")
+                        .HasColumnType("int");
+
+                    b.HasKey("EvaluacionTorneoId");
+
+                    b.HasIndex("PatinadorId");
+
+                    b.HasIndex("TorneoId");
+
+                    b.ToTable("EvaluacionesTorneos", (string)null);
                 });
 
             modelBuilder.Entity("Patinaje.API.Models.InscripcionTorneo", b =>
@@ -115,20 +186,23 @@ namespace Patinaje.API.Migrations
 
                     b.Property<string>("CategoriaCompetencia")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
 
                     b.Property<decimal>("CostoInscripcion")
                         .HasColumnType("decimal(65,30)");
 
                     b.Property<string>("EstadoPago")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
 
                     b.Property<int>("PatinadorId")
                         .HasColumnType("int");
 
                     b.Property<string>("Resultado")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
 
                     b.Property<int>("TorneoId")
                         .HasColumnType("int");
@@ -139,7 +213,7 @@ namespace Patinaje.API.Migrations
 
                     b.HasIndex("TorneoId");
 
-                    b.ToTable("Inscripciones");
+                    b.ToTable("Inscripciones", (string)null);
                 });
 
             modelBuilder.Entity("Patinaje.API.Models.Pago", b =>
@@ -152,11 +226,13 @@ namespace Patinaje.API.Migrations
 
                     b.Property<string>("Concepto")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("Estado")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<DateTime?>("FechaPago")
                         .HasColumnType("datetime(6)");
@@ -165,7 +241,8 @@ namespace Patinaje.API.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("LinkComprobante")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
 
                     b.Property<decimal>("Monto")
                         .HasColumnType("decimal(65,30)");
@@ -177,7 +254,7 @@ namespace Patinaje.API.Migrations
 
                     b.HasIndex("PatinadorId");
 
-                    b.ToTable("Pagos");
+                    b.ToTable("Pagos", (string)null);
                 });
 
             modelBuilder.Entity("Patinaje.API.Models.Patinador", b =>
@@ -193,7 +270,8 @@ namespace Patinaje.API.Migrations
 
                     b.Property<string>("Apellido")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<bool>("AsisteGimnasio")
                         .HasColumnType("tinyint(1)");
@@ -213,23 +291,28 @@ namespace Patinaje.API.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Dni")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
 
                     b.Property<string>("Domicilio")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<DateTime>("FechaNacimiento")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("FichaMedica")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("FotoUrl")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<int>("ProfesorId")
                         .HasColumnType("int");
@@ -240,7 +323,7 @@ namespace Patinaje.API.Migrations
 
                     b.HasIndex("ProfesorId");
 
-                    b.ToTable("Patinadores");
+                    b.ToTable("Patinadores", (string)null);
                 });
 
             modelBuilder.Entity("Patinaje.API.Models.Profesor", b =>
@@ -253,16 +336,19 @@ namespace Patinaje.API.Migrations
 
                     b.Property<string>("Apellido")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<int?>("ClubId")
                         .HasColumnType("int");
 
                     b.Property<string>("Dni")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
 
                     b.Property<string>("Domicilio")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -271,20 +357,23 @@ namespace Patinaje.API.Migrations
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
 
                     b.Property<string>("Telefono")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
 
                     b.HasKey("ProfesorId");
 
                     b.HasIndex("ClubId");
 
-                    b.ToTable("Profesores");
+                    b.ToTable("Profesores", (string)null);
                 });
 
             modelBuilder.Entity("Patinaje.API.Models.Torneo", b =>
@@ -306,19 +395,22 @@ namespace Patinaje.API.Migrations
 
                     b.Property<string>("Lugar")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("Organizador")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.HasKey("TorneoId");
 
-                    b.ToTable("Torneos");
+                    b.ToTable("Torneos", (string)null);
                 });
 
             modelBuilder.Entity("Patinaje.API.Models.Tutor", b =>
@@ -331,30 +423,37 @@ namespace Patinaje.API.Migrations
 
                     b.Property<string>("Apellido")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("Dni")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
 
                     b.Property<string>("Domicilio")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("Email")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("Relacion")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
 
                     b.Property<string>("Telefono")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
 
                     b.HasKey("TutorId");
 
-                    b.ToTable("Tutores");
+                    b.ToTable("Tutores", (string)null);
                 });
 
             modelBuilder.Entity("Patinaje.API.Models.TutorPatinador", b =>
@@ -369,13 +468,13 @@ namespace Patinaje.API.Migrations
 
                     b.HasIndex("PatinadorId");
 
-                    b.ToTable("TutoresPatinadores");
+                    b.ToTable("TutoresPatinadores", (string)null);
                 });
 
             modelBuilder.Entity("Patinaje.API.Models.Asistencia", b =>
                 {
                     b.HasOne("Patinaje.API.Models.Patinador", "Patinador")
-                        .WithMany()
+                        .WithMany("Asistencias")
                         .HasForeignKey("PatinadorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -383,7 +482,29 @@ namespace Patinaje.API.Migrations
                     b.Navigation("Patinador");
                 });
 
+            modelBuilder.Entity("Patinaje.API.Models.DetalleElemento", b =>
+                {
+                    b.HasOne("Patinaje.API.Models.EvaluacionTorneo", "EvaluacionTorneo")
+                        .WithMany("Detalles")
+                        .HasForeignKey("EvaluacionTorneoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("EvaluacionTorneo");
+                });
+
             modelBuilder.Entity("Patinaje.API.Models.EvaluacionTecnica", b =>
+                {
+                    b.HasOne("Patinaje.API.Models.Patinador", "Patinador")
+                        .WithMany("Evaluaciones")
+                        .HasForeignKey("PatinadorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Patinador");
+                });
+
+            modelBuilder.Entity("Patinaje.API.Models.EvaluacionTorneo", b =>
                 {
                     b.HasOne("Patinaje.API.Models.Patinador", "Patinador")
                         .WithMany()
@@ -391,7 +512,15 @@ namespace Patinaje.API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Patinaje.API.Models.Torneo", "Torneo")
+                        .WithMany()
+                        .HasForeignKey("TorneoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Patinador");
+
+                    b.Navigation("Torneo");
                 });
 
             modelBuilder.Entity("Patinaje.API.Models.InscripcionTorneo", b =>
@@ -416,7 +545,7 @@ namespace Patinaje.API.Migrations
             modelBuilder.Entity("Patinaje.API.Models.Pago", b =>
                 {
                     b.HasOne("Patinaje.API.Models.Patinador", "Patinador")
-                        .WithMany()
+                        .WithMany("Pagos")
                         .HasForeignKey("PatinadorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -476,8 +605,19 @@ namespace Patinaje.API.Migrations
                     b.Navigation("Profesores");
                 });
 
+            modelBuilder.Entity("Patinaje.API.Models.EvaluacionTorneo", b =>
+                {
+                    b.Navigation("Detalles");
+                });
+
             modelBuilder.Entity("Patinaje.API.Models.Patinador", b =>
                 {
+                    b.Navigation("Asistencias");
+
+                    b.Navigation("Evaluaciones");
+
+                    b.Navigation("Pagos");
+
                     b.Navigation("Tutores");
                 });
 

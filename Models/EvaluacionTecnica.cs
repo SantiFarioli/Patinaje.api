@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+using System.ComponentModel.DataAnnotations;
+
 namespace Patinaje.API.Models
 {
     public class EvaluacionTecnica
@@ -12,10 +14,14 @@ namespace Patinaje.API.Models
         public int PatinadorId { get; set; }
         public Patinador Patinador { get; set; } = null!;
 
-        public string Elemento { get; set; } = null!; // ej: Salto Axel
+        [MaxLength(50)]
+        public string Elemento { get; set; } = string.Empty; // Ej: Axel, Trompo, Secuencia
+
         public DateTime Fecha { get; set; }
-        public int Puntaje { get; set; } // 1 a 5
-        public string? Observaciones { get; set; }
-        public string? VideoUrl { get; set; }
+
+        public int Puntaje { get; set; }
+
+        [MaxLength(50)]
+        public string? Observaciones { get; set; } // Comentarios de la profe sobre la ejecución
     }
 }

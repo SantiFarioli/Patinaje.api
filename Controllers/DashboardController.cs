@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Patinaje.API.Models;
+using Patinaje.API.Data;
+
 
 [ApiController]
 [Route("api/[controller]")]

@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Patinaje.API.Data;
+
 
 namespace Patinaje.API.Controllers
 {

@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Patinaje.API.Data;
 using Patinaje.API.Models;
+
+namespace Patinaje.API.Data;
 
 public static class DbInitializer
 {
@@ -109,10 +112,10 @@ public static class DbInitializer
             return p;
         }
 
-        var cami  = await EnsurePatinador("Camila", "Gómez", "45322111", "Barrio Sur 101", new DateTime(2012,6,10), "B Libre", profDemo, club1, 1);
-        var sofi  = await EnsurePatinador("Sofía", "Martínez", "46123999", "Calle Mitre 202", new DateTime(2011,4,25), "C Escuela", profDemo, club1, 2);
-        var lucia = await EnsurePatinador("Lucía", "Pérez", "47222123", "Av. San Martín 789", new DateTime(2010,9, 5), "A Libre", profReal, club2, 3);
-        var lola  = await EnsurePatinador("Lola", "Rivas", "48999123", "Los Álamos 333", new DateTime(2013,1,18), "B Escuela", profReal, club2, 4);
+        var cami = await EnsurePatinador("Camila", "Gómez", "45322111", "Barrio Sur 101", new DateTime(2012, 6, 10), "B Libre", profDemo, club1, 1);
+        var sofi = await EnsurePatinador("Sofía", "Martínez", "46123999", "Calle Mitre 202", new DateTime(2011, 4, 25), "C Escuela", profDemo, club1, 2);
+        var lucia = await EnsurePatinador("Lucía", "Pérez", "47222123", "Av. San Martín 789", new DateTime(2010, 9, 5), "A Libre", profReal, club2, 3);
+        var lola = await EnsurePatinador("Lola", "Rivas", "48999123", "Los Álamos 333", new DateTime(2013, 1, 18), "B Escuela", profReal, club2, 4);
 
         // === Tutores ===
         async Task<Tutor> EnsureTutor(string nom, string ape, string dni, string dom, string email, string tel, string relacion)
@@ -187,7 +190,8 @@ public static class DbInitializer
         }
 
         // Torneo pasado
-        var pasado = new Torneo {
+        var pasado = new Torneo
+        {
             Nombre = "Copa Invierno",
             Lugar = "Club Norte",
             FechaInicio = hoy.AddDays(-20).AddHours(9),
@@ -220,7 +224,8 @@ public static class DbInitializer
                 x.PatinadorId == p.PatinadorId && x.Elemento == elemento && x.Fecha == fecha);
             if (!exists)
             {
-                db.Evaluaciones.Add(new EvaluacionTecnica {
+                db.Evaluaciones.Add(new EvaluacionTecnica
+                {
                     PatinadorId = p.PatinadorId,
                     Elemento = elemento,
                     Fecha = fecha,
@@ -241,7 +246,8 @@ public static class DbInitializer
                 x.PatinadorId == p.PatinadorId && x.Concepto == concepto && x.FechaVencimiento == venc);
             if (!exists)
             {
-                db.Pagos.Add(new Pago {
+                db.Pagos.Add(new Pago
+                {
                     PatinadorId = p.PatinadorId,
                     Concepto = concepto,
                     Monto = monto,

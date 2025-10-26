@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Patinaje.API.Models;
+using Patinaje.API.Data;
 
 [ApiController]
 [Route("api/[controller]")]

@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Patinaje.API.Models;
+using Patinaje.API.Data;
+
 
 [ApiController]
 [Route("auth")]
