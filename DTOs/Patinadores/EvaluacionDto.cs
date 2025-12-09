@@ -1,14 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
 namespace Patinaje.API.DTOs.Patinadores;
 
 public record EvaluacionDto(
     int EvaluacionId,
-    string Elemento,
+    string NombreTorneo,    // 👈 Nuevo
     DateTime Fecha,
-    int Puntaje,
-    string? Observaciones
+    int Puntaje,            // Mantenemos por compatibilidad (aunque sea 0)
+    string? Observaciones,
+    string? ArchivoPdfUrl   // 👈 Nuevo
 );

@@ -1,13 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http; 
 
 namespace Patinaje.API.DTOs.EvaluacionesTorneos
 {
-    public class CrearEvaluacionTorneoDto
+    public class CrearEvaluacionTorneoRequest
     {
         [Required]
         public int PatinadorId { get; set; }
@@ -18,8 +14,7 @@ namespace Patinaje.API.DTOs.EvaluacionesTorneos
         [Required]
         public DateTime Fecha { get; set; }
 
-        [MaxLength(250)]
-        public string? ArchivoPdf { get; set; }
+        public IFormFile? ArchivoPdf { get; set; }
 
         [MaxLength(200)]
         public string? Observaciones { get; set; }

@@ -67,8 +67,11 @@ public class PatinadoresController : ControllerBase
             .Include(x => x.Tutores).ThenInclude(tp => tp.Tutor)
             .Include(x => x.Asistencias)
             .Include(x => x.Pagos)
-            .Include(x => x.Evaluaciones)
+            // Incluimos EvaluacionesTorneos y el Torneo
+            .Include(x => x.EvaluacionesTorneos).ThenInclude(et => et.Torneo)
             .Where(x => x.PatinadorId == id)
+            // Importante: .FirstOrDefaultAsync() ANTES del select complejo
+            // o hacemos el select directo. Vamos con select directo:
             .Select(p => new PatinadorDetailDto(
                 p.PatinadorId,
                 p.Nombre,
@@ -87,35 +90,31 @@ public class PatinadoresController : ControllerBase
                 p.Profesor.Nombre + " " + p.Profesor.Apellido,
                 p.ClubId,
                 p.Club != null ? p.Club.Nombre : null,
+                
+                // Tutores
                 p.Tutores.Select(tp => new TutorDto(
-                    tp.TutorId,
-                    tp.Tutor.Nombre,
-                    tp.Tutor.Apellido,
-                    tp.Tutor.Dni,
-                    tp.Tutor.Domicilio,
-                    tp.Tutor.Telefono,
-                    tp.Tutor.Email,
-                    tp.Tutor.Relacion
+                    tp.TutorId, tp.Tutor.Nombre, tp.Tutor.Apellido, tp.Tutor.Dni, 
+                    tp.Tutor.Domicilio, tp.Tutor.Telefono, tp.Tutor.Email, tp.Tutor.Relacion
                 )).ToList(),
+
+                // Asistencias
                 p.Asistencias.Select(a => new AsistenciaDto(
-                    a.AsistenciaId,
-                    a.FechaClase,
-                    a.Presente
+                    a.AsistenciaId, a.FechaClase, a.Presente
                 )).ToList(),
+
+                // Pagos
                 p.Pagos.Select(pg => new PagoDto(
-                    pg.PagoId,
-                    pg.Concepto,
-                    pg.Monto,
-                    pg.Estado,
-                    pg.FechaVencimiento,
-                    pg.FechaPago
+                    pg.PagoId, pg.Concepto, pg.Monto, pg.Estado, pg.FechaVencimiento, pg.FechaPago
                 )).ToList(),
-                p.Evaluaciones.Select(ev => new EvaluacionDto(
-                    ev.EvaluacionTecnicaId,
-                    ev.Elemento,
-                    ev.Fecha,
-                    ev.Puntaje,
-                    ev.Observaciones
+                
+                // Evaluaciones (Aquí mapeamos al nuevo DTO)
+                p.EvaluacionesTorneos.Select(ev => new EvaluacionDto(
+                    ev.EvaluacionTorneoId,
+                    ev.Torneo.Nombre,
+                    ev.FechaEvaluacion,
+                    0, 
+                    ev.ObservacionesGenerales ?? "",
+                    ev.ArchivoPdfUrl
                 )).ToList()
             ))
             .FirstOrDefaultAsync();

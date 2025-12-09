@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization; // 👈 NECESARIO PARA CORREGIR EL ERROR DE CICLOS
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -70,8 +71,14 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 
-// ===================== Web API, CORS =====================
-builder.Services.AddControllers();
+// ===================== Web API, CORS y JSON =====================
+
+// 👇 AQUÍ ESTÁ EL CAMBIO MÁGICO PARA EVITAR EL ERROR "Cycle Detected"
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+});
+
 builder.Services.AddEndpointsApiExplorer();
 
 // CORS abierto por ahora (cerrar después)
@@ -79,6 +86,10 @@ builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
     p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
 var app = builder.Build();
+
+// ===================== Static Files (Para ver los PDFs) =====================
+// 👇 Asegúrate de agregar esto si no lo tenías, es vital para acceder a wwwroot/uploads
+app.UseStaticFiles(); 
 
 if (app.Environment.IsDevelopment())
 {

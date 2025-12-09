@@ -50,6 +50,7 @@ namespace Patinaje.API.Models
         public ICollection<TutorPatinador> Tutores { get; set; } = new List<TutorPatinador>();
         public ICollection<Asistencia> Asistencias { get; set; } = new List<Asistencia>();
         public ICollection<Pago> Pagos { get; set; } = new List<Pago>();
+        public ICollection<EvaluacionTorneo> EvaluacionesTorneos { get; set; } = new List<EvaluacionTorneo>();
         public ICollection<EvaluacionTecnica> Evaluaciones { get; set; } = new List<EvaluacionTecnica>();
 
     }
