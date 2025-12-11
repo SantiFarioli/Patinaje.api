@@ -8,9 +8,10 @@ public static class DbInitializer
 {
     public static async Task InitializeAsync(AppPatinContext db)
     {
+        // 1. Migraciones
         await db.Database.MigrateAsync();
 
-        // === Clubes ===
+        // ========================== CLUBES ==========================
         var club1 = await db.Clubes.FirstOrDefaultAsync(c => c.ClubId == 1);
         if (club1 is null)
         {
@@ -27,7 +28,7 @@ public static class DbInitializer
             await db.SaveChangesAsync();
         }
 
-        // === Profesoras ===
+        // ========================== PROFESORES ==========================
         var profDemo = await db.Profesores.FirstOrDefaultAsync(p => p.Email == "profe@club.com");
         if (profDemo is null)
         {
@@ -44,40 +45,10 @@ public static class DbInitializer
             };
             db.Profesores.Add(profDemo);
         }
-        else
-        {
-            profDemo.Dni ??= "20111222";
-            profDemo.Domicilio ??= "Calle Falsa 123";
-            profDemo.ClubId = club1.ClubId;
-        }
         await db.SaveChangesAsync();
 
-        var profReal = await db.Profesores.FirstOrDefaultAsync(p => p.Email == "profe.agus@club.com");
-        if (profReal is null)
-        {
-            profReal = new Profesor
-            {
-                Nombre = "Agustina",
-                Apellido = "Luna",
-                Email = "profe.agus@club.com",
-                Telefono = "266-111111",
-                Dni = "22333444",
-                Domicilio = "Av. del Sol 456",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("patin2025"),
-                ClubId = club2.ClubId
-            };
-            db.Profesores.Add(profReal);
-        }
-        else
-        {
-            profReal.Dni ??= "22333444";
-            profReal.Domicilio ??= "Av. del Sol 456";
-            profReal.ClubId = club2.ClubId;
-        }
-        await db.SaveChangesAsync();
-
-        // === Patinadoras ===
-        async Task<Patinador> EnsurePatinador(string nom, string ape, string dni, string dom, DateTime fnac, string cat, Profesor prof, Club club, int fotoSeed)
+        // ========================== PATINADORAS (7) ==========================
+        async Task<Patinador> CreatePatinador(string nom, string ape, string dni, string dom, DateTime fnac, string cat, int seed)
         {
             var p = await db.Patinadores.FirstOrDefaultAsync(x => x.Dni == dni);
             if (p is null)
@@ -86,180 +57,120 @@ public static class DbInitializer
                 {
                     Nombre = nom,
                     Apellido = ape,
+                    Dni = dni,
+                    Domicilio = dom,
                     FechaNacimiento = fnac,
                     Categoria = cat,
                     Activo = true,
-                    Dni = dni,
-                    Domicilio = dom,
                     FichaMedica = "Apta",
                     AsisteGimnasio = true,
                     AsisteNutricionista = false,
                     AsistePsicologo = false,
-                    ProfesorId = prof.ProfesorId,
-                    ClubId = club.ClubId,
-                    FotoUrl = $"https://picsum.photos/seed/{fotoSeed}/400"
+                    ProfesorId = profDemo.ProfesorId,
+                    ClubId = club1.ClubId,
+                    FotoUrl = $"https://picsum.photos/seed/{seed}/400"
                 };
                 db.Patinadores.Add(p);
+                await db.SaveChangesAsync();
             }
-            else
-            {
-                p.Dni ??= dni;
-                p.Domicilio ??= dom;
-                if (string.IsNullOrEmpty(p.FotoUrl))
-                    p.FotoUrl = $"https://picsum.photos/seed/{fotoSeed}/400";
-            }
-            await db.SaveChangesAsync();
             return p;
         }
 
-        var cami = await EnsurePatinador("Camila", "Gómez", "45322111", "Barrio Sur 101", new DateTime(2012, 6, 10), "B Libre", profDemo, club1, 1);
-        var sofi = await EnsurePatinador("Sofía", "Martínez", "46123999", "Calle Mitre 202", new DateTime(2011, 4, 25), "C Escuela", profDemo, club1, 2);
-        var lucia = await EnsurePatinador("Lucía", "Pérez", "47222123", "Av. San Martín 789", new DateTime(2010, 9, 5), "A Libre", profReal, club2, 3);
-        var lola = await EnsurePatinador("Lola", "Rivas", "48999123", "Los Álamos 333", new DateTime(2013, 1, 18), "B Escuela", profReal, club2, 4);
+        var cami = await CreatePatinador("Camila", "Gómez", "45322111", "Barrio Sur 101", new DateTime(2012, 6, 10), "B Libre", 101);
+        var sofi = await CreatePatinador("Sofía", "Martínez", "46123999", "Calle Mitre 202", new DateTime(2011, 4, 25), "C Escuela", 102);
+        var lucia = await CreatePatinador("Lucía", "Pérez", "47222123", "Av. San Martín 789", new DateTime(2010, 9, 5), "A Libre", 103);
+        var lola = await CreatePatinador("Lola", "Rivas", "48999123", "Los Álamos 333", new DateTime(2013, 1, 18), "B Escuela", 104);
+        var valen = await CreatePatinador("Valentina", "Soria", "49111222", "Barrio Norte 55", new DateTime(2014, 3, 12), "C Libre", 105);
+        var marti = await CreatePatinador("Martina", "López", "50222333", "Calle 25 de Mayo 900", new DateTime(2012, 11, 30), "A Escuela", 106);
+        var juli = await CreatePatinador("Julieta", "Fernández", "51333444", "Ruta 3 Km 5", new DateTime(2013, 7, 7), "B Libre", 107);
 
-        // === Tutores ===
-        async Task<Tutor> EnsureTutor(string nom, string ape, string dni, string dom, string email, string tel, string relacion)
+        // ========================== TUTORES ==========================
+        async Task<Tutor> EnsureTutor(string nom, string ape, string dni, string email, string tel, string relacion)
         {
             var t = await db.Tutores.FirstOrDefaultAsync(x => x.Email == email);
             if (t is null)
             {
                 t = new Tutor
                 {
-                    Nombre = nom,
-                    Apellido = ape,
-                    Dni = dni,
-                    Domicilio = dom,
-                    Email = email,
-                    Telefono = tel,
-                    Relacion = relacion
+                    Nombre = nom, Apellido = ape, Dni = dni, Domicilio = "Domicilio Tutor",
+                    Email = email, Telefono = tel, Relacion = relacion
                 };
                 db.Tutores.Add(t);
+                await db.SaveChangesAsync();
             }
-            else
-            {
-                t.Dni ??= dni;
-                t.Domicilio ??= dom;
-                t.Relacion ??= relacion;
-            }
-            await db.SaveChangesAsync();
             return t;
         }
 
-        var tut1 = await EnsureTutor("Carolina", "Gómez", "30222333", "Barrio Norte 77", "caro.gomez@mail.com", "266-222222", "Madre");
-        var tut2 = await EnsureTutor("Diego", "Martínez", "30111999", "Las Heras 55", "diego.mtz@mail.com", "266-333333", "Padre");
+        // Creamos tutores (Caro es mamá de Cami y Lucía, para probar hermanos)
+        var tCaro = await EnsureTutor("Carolina", "Gómez", "30222333", "caro.gomez@mail.com", "266-222222", "Madre");
+        var tDiego = await EnsureTutor("Diego", "Martínez", "30111999", "diego.mtz@mail.com", "266-333333", "Padre");
+        var tLaura = await EnsureTutor("Laura", "Rivas", "31444555", "laura.rivas@mail.com", "266-444444", "Madre");
+        var tPablo = await EnsureTutor("Pablo", "Soria", "32555666", "pablo.soria@mail.com", "266-555555", "Padre");
+        var tAna = await EnsureTutor("Ana", "López", "33666777", "ana.lopez@mail.com", "266-666666", "Madre");
+        var tJorge = await EnsureTutor("Jorge", "Fernández", "34777888", "jorge.fer@mail.com", "266-777777", "Padre");
 
-        // === Vinculos ===
-        async Task EnsureVinculo(Tutor t, Patinador p)
+        // ========================== VINCULOS (Tutor-Patinador) ==========================
+        async Task Link(Tutor t, Patinador p)
         {
-            var exists = await db.TutoresPatinadores.AnyAsync(x => x.TutorId == t.TutorId && x.PatinadorId == p.PatinadorId);
-            if (!exists)
+            if (!await db.TutoresPatinadores.AnyAsync(x => x.TutorId == t.TutorId && x.PatinadorId == p.PatinadorId))
             {
                 db.TutoresPatinadores.Add(new TutorPatinador { TutorId = t.TutorId, PatinadorId = p.PatinadorId });
                 await db.SaveChangesAsync();
             }
         }
 
-        await EnsureVinculo(tut1, cami);
-        await EnsureVinculo(tut2, sofi);
-        await EnsureVinculo(tut1, lucia);
+        await Link(tCaro, cami);  // Caro -> Cami
+        await Link(tCaro, lucia); // Caro -> Lucía (Hermanas)
+        await Link(tDiego, sofi);
+        await Link(tLaura, lola);
+        await Link(tPablo, valen);
+        await Link(tAna, marti);
+        await Link(tJorge, juli);
 
-        // === Torneos (ejemplo) ===
-        var hoy = DateTime.Today;
-        var futuros = new[] {
-            new Torneo {
-                Nombre = "Torneo Apertura",
-                Lugar = "Club Unión",
-                FechaInicio = hoy.AddDays(10).AddHours(9),
-                FechaFin = hoy.AddDays(11).AddHours(18),
-                FechaLimiteInscripcion = hoy.AddDays(5),
-                Organizador = "Federación San Luis"
-            },
-            new Torneo {
-                Nombre = "Selectivo Provincial",
-                Lugar = "Pista Central",
-                FechaInicio = hoy.AddDays(2).AddHours(18),
-                FechaFin = hoy.AddDays(2).AddHours(21),
-                FechaLimiteInscripcion = hoy.AddDays(1),
-                Organizador = "Asociación Provincial"
-            }
-        };
-        foreach (var t in futuros)
+        // ========================== TORNEOS (7) ==========================
+        if (!db.Torneos.Any())
         {
-            bool exists = await db.Torneos.AnyAsync(x => x.Nombre == t.Nombre && x.FechaInicio == t.FechaInicio);
-            if (!exists) { db.Torneos.Add(t); await db.SaveChangesAsync(); }
-        }
-
-        // Torneo pasado
-        var pasado = new Torneo
-        {
-            Nombre = "Copa Invierno",
-            Lugar = "Club Norte",
-            FechaInicio = hoy.AddDays(-20).AddHours(9),
-            FechaFin = hoy.AddDays(-18).AddHours(18),
-            FechaLimiteInscripcion = hoy.AddDays(-25),
-            Organizador = "Liga Regional"
-        };
-        if (!await db.Torneos.AnyAsync(x => x.Nombre == pasado.Nombre && x.FechaInicio == pasado.FechaInicio))
-        { db.Torneos.Add(pasado); await db.SaveChangesAsync(); }
-
-        // === Asistencias ejemplo ===
-        async Task EnsureAsistencia(Patinador p, DateTime fecha, bool presente)
-        {
-            bool exists = await db.Asistencias.AnyAsync(x => x.PatinadorId == p.PatinadorId && x.FechaClase == fecha.Date);
-            if (!exists)
+            var today = DateTime.Today;
+            var torneos = new[]
             {
-                db.Asistencias.Add(new Asistencia { PatinadorId = p.PatinadorId, FechaClase = fecha.Date, Presente = presente });
-                await db.SaveChangesAsync();
-            }
+                new Torneo { Nombre = "Copa Invierno 2024", Lugar = "Club Norte", FechaInicio = today.AddMonths(-3), FechaFin = today.AddMonths(-3).AddDays(2), FechaLimiteInscripcion = today.AddMonths(-3).AddDays(-10), Organizador = "Liga Regional" },
+                new Torneo { Nombre = "Regional Cuyo", Lugar = "Polideportivo", FechaInicio = today.AddMonths(-1), FechaFin = today.AddMonths(-1).AddDays(3), FechaLimiteInscripcion = today.AddMonths(-1).AddDays(-15), Organizador = "Federación" },
+                new Torneo { Nombre = "Torneo Apertura 2025", Lugar = "Club Unión", FechaInicio = today.AddDays(15), FechaFin = today.AddDays(17), FechaLimiteInscripcion = today.AddDays(5), Organizador = "Federación San Luis" },
+                new Torneo { Nombre = "Selectivo Provincial", Lugar = "Pista Central", FechaInicio = today.AddMonths(1), FechaFin = today.AddMonths(1).AddDays(2), FechaLimiteInscripcion = today.AddDays(20), Organizador = "Asociación" },
+                new Torneo { Nombre = "Nacional B", Lugar = "Mar del Plata", FechaInicio = today.AddMonths(3), FechaFin = today.AddMonths(3).AddDays(5), FechaLimiteInscripcion = today.AddMonths(2), Organizador = "Confederación Argentina" },
+                new Torneo { Nombre = "Copa Amistad", Lugar = "Villa Mercedes", FechaInicio = today.AddMonths(4), FechaFin = today.AddMonths(4).AddDays(2), FechaLimiteInscripcion = today.AddMonths(3), Organizador = "Club Mercedes" },
+                new Torneo { Nombre = "Clausura 2025", Lugar = "San Luis", FechaInicio = today.AddMonths(6), FechaFin = today.AddMonths(6).AddDays(3), FechaLimiteInscripcion = today.AddMonths(5), Organizador = "Federación" }
+            };
+            db.Torneos.AddRange(torneos);
+            await db.SaveChangesAsync();
         }
-        await EnsureAsistencia(cami, hoy.AddDays(-2), true);
-        await EnsureAsistencia(cami, hoy.AddDays(-1), true);
-        await EnsureAsistencia(sofi, hoy.AddDays(-1), false);
-        await EnsureAsistencia(lucia, hoy.AddDays(-3), true);
 
-        // === Evaluaciones ejemplo ===
-        async Task EnsureEval(Patinador p, string elemento, DateTime fecha, int puntaje, string? obs = null)
+        // ========================== PAGOS ==========================
+        if (!db.Pagos.Any())
         {
-            bool exists = await db.Evaluaciones.AnyAsync(x =>
-                x.PatinadorId == p.PatinadorId && x.Elemento == elemento && x.Fecha == fecha);
-            if (!exists)
-            {
-                db.Evaluaciones.Add(new EvaluacionTecnica
-                {
-                    PatinadorId = p.PatinadorId,
-                    Elemento = elemento,
-                    Fecha = fecha,
-                    Puntaje = puntaje,
-                    Observaciones = obs
-                });
-                await db.SaveChangesAsync();
-            }
+            var now = DateTime.Today;
+            db.Pagos.Add(new Pago { PatinadorId = cami.PatinadorId, Concepto = "Cuota Agosto", Monto = 15000, Estado = "Pagado", FechaVencimiento = now.AddMonths(-1), FechaPago = now.AddMonths(-1).AddDays(-2) });
+            db.Pagos.Add(new Pago { PatinadorId = lucia.PatinadorId, Concepto = "Inscripción Torneo", Monto = 25000, Estado = "Pagado", FechaVencimiento = now.AddDays(-10), FechaPago = now.AddDays(-12) });
+            db.Pagos.Add(new Pago { PatinadorId = cami.PatinadorId, Concepto = "Cuota Septiembre", Monto = 18000, Estado = "Pendiente", FechaVencimiento = now.AddDays(5) });
+            db.Pagos.Add(new Pago { PatinadorId = sofi.PatinadorId, Concepto = "Cuota Septiembre", Monto = 18000, Estado = "Pendiente", FechaVencimiento = now.AddDays(5) });
+            db.Pagos.Add(new Pago { PatinadorId = lola.PatinadorId, Concepto = "Malla Competición", Monto = 45000, Estado = "Pendiente", FechaVencimiento = now.AddDays(10) });
+            await db.SaveChangesAsync();
         }
-        await EnsureEval(cami, "Salto Axel", hoy.AddDays(-7), 4, "Buena ejecución");
-        await EnsureEval(sofi, "Giro Biellmann", hoy.AddDays(-5), 3, "Mejorar estabilidad");
-        await EnsureEval(lucia, "Secuencia de pasos", hoy.AddDays(-3), 5, "Excelente ritmo");
 
-        // === Pagos ejemplo ===
-        async Task EnsurePago(Patinador p, string concepto, decimal monto, DateTime venc, string estado, DateTime? fechaPago = null)
+        // ========================== ASISTENCIAS ==========================
+        if (!db.Asistencias.Any())
         {
-            bool exists = await db.Pagos.AnyAsync(x =>
-                x.PatinadorId == p.PatinadorId && x.Concepto == concepto && x.FechaVencimiento == venc);
-            if (!exists)
+            var dias = new[] { DateTime.Today.AddDays(-1), DateTime.Today.AddDays(-3), DateTime.Today.AddDays(-5) };
+            foreach (var d in dias)
             {
-                db.Pagos.Add(new Pago
-                {
-                    PatinadorId = p.PatinadorId,
-                    Concepto = concepto,
-                    Monto = monto,
-                    Estado = estado,
-                    FechaVencimiento = venc,
-                    FechaPago = fechaPago
-                });
-                await db.SaveChangesAsync();
+                // Asistencia aleatoria
+                db.Asistencias.Add(new Asistencia { PatinadorId = cami.PatinadorId, FechaClase = d, Presente = true });
+                db.Asistencias.Add(new Asistencia { PatinadorId = sofi.PatinadorId, FechaClase = d, Presente = true });
+                db.Asistencias.Add(new Asistencia { PatinadorId = lucia.PatinadorId, FechaClase = d, Presente = false });
+                db.Asistencias.Add(new Asistencia { PatinadorId = lola.PatinadorId, FechaClase = d, Presente = true });
+                db.Asistencias.Add(new Asistencia { PatinadorId = valen.PatinadorId, FechaClase = d, Presente = true });
             }
+            await db.SaveChangesAsync();
         }
-        await EnsurePago(cami, "Cuota Septiembre", 15000m, hoy.AddDays(9), "Pendiente");
-        await EnsurePago(sofi, "Cuota Septiembre", 15000m, hoy.AddDays(9), "Pendiente");
-        await EnsurePago(lucia, "Cuota Agosto", 15000m, hoy.AddDays(-20), "Pagado", hoy.AddDays(-15));
     }
 }
