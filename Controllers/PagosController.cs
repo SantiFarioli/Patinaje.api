@@ -30,6 +30,15 @@ public class PagosController : ControllerBase
         string? LinkComprobante
     );
 
+    // DTO específico para esta lista (defínelo aquí mismo o arriba junto a los otros)
+    public record PagoPendienteDto(
+        int PagoId,
+        string PatinadoraNombre,  // 👈 Dato clave
+        string Concepto,
+        decimal Monto,
+        DateTime FechaVencimiento
+    );
+
     public record MarcarPagoDto(DateTime FechaPago, string? LinkComprobante);
 
     // GET /api/pagos?patinadorId=1&estado=Pendiente
@@ -114,5 +123,26 @@ public class PagosController : ControllerBase
         _db.Remove(p);
         await _db.SaveChangesAsync();
         return NoContent();
+    }
+
+    // GET: api/pagos/pendientes
+    // Devuelve todos los pagos que NO están pagados, con el nombre de la chica
+    [HttpGet("pendientes")]
+    public async Task<IActionResult> GetPendientes()
+    {
+        var lista = await _db.Pagos
+            .Include(p => p.Patinador) // Importante: Join con Patinador
+            .Where(p => p.Estado == "Pendiente")
+            .OrderBy(p => p.FechaVencimiento) // Los más urgentes primero
+            .Select(p => new PagoPendienteDto(
+                p.PagoId,
+                p.Patinador.Nombre + " " + p.Patinador.Apellido,
+                p.Concepto,
+                p.Monto,
+                p.FechaVencimiento ?? DateTime.MaxValue
+            ))
+            .ToListAsync();
+
+        return Ok(lista);
     }
 }
