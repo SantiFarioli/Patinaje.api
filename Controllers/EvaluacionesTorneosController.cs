@@ -13,11 +13,17 @@ namespace Patinaje.API.Controllers
     public class EvaluacionesTorneosController : ControllerBase
     {
         private readonly AppPatinContext _db;
-        public EvaluacionesTorneosController(AppPatinContext db) => _db = db;
+        private readonly IWebHostEnvironment _env;
+
+        public EvaluacionesTorneosController(AppPatinContext db, IWebHostEnvironment env)
+        {
+            _db = db;
+            _env = env;
+        }
 
         // POST: api/evaluacionestorneos
-        // Usamos [FromForm] para permitir Multipart (Archivo + Datos)
         [HttpPost]
+        [RequestSizeLimit(10 * 1024 * 1024)] // Límite de 10MB para todo el request
         public async Task<IActionResult> Create([FromForm] CrearEvaluacionTorneoRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -29,54 +35,70 @@ namespace Patinaje.API.Controllers
             var torneo = await _db.Torneos.FindAsync(request.TorneoId);
             if (torneo is null) return BadRequest("Torneo no válido.");
 
-            string? pdfUrl = null;
-
-            // 2. Procesar el archivo PDF (si viene uno)
-            if (request.ArchivoPdf != null && request.ArchivoPdf.Length > 0)
+            // 2. Regla de Negocio: Validar Fecha (+/- 7 días del torneo)
+            var fechaInicio = torneo.FechaInicio;
+            // No hay fecha fin en el modelo actual? Usamos inicio como referencia
+            // Si quieres ser estricto: FechaInicio.AddDays(-7) <= request.Fecha <= FechaFin.AddDays(7)
+            // Asumiendo Fecha evaluacion alrededor de Fecha Inicio:
+            var diff = (request.Fecha - fechaInicio).TotalDays;
+            if (Math.Abs(diff) > 7)
             {
-                try 
-                {
-                    // Nombre único: eva_{id}_{uuid}.pdf
-                    var fileName = $"eva_{request.PatinadorId}_{Guid.NewGuid()}.pdf";
-                    
-                    // Ruta física: wwwroot/uploads/evaluaciones
-                    var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "evaluaciones");
-                    
-                    if (!Directory.Exists(folderPath))
-                        Directory.CreateDirectory(folderPath);
-
-                    var fullPath = Path.Combine(folderPath, fileName);
-
-                    // Guardar en disco
-                    using (var stream = new FileStream(fullPath, FileMode.Create))
-                    {
-                        await request.ArchivoPdf.CopyToAsync(stream);
-                    }
-
-                    // Generar URL pública para guardar en BD
-                    var baseUrl = $"{Request.Scheme}://{Request.Host}";
-                    pdfUrl = $"{baseUrl}/uploads/evaluaciones/{fileName}";
-                }
-                catch (Exception ex)
-                {
-                    return StatusCode(500, $"Error al subir archivo: {ex.Message}");
-                }
+                return BadRequest($"La fecha de evaluación debe estar dentro de los 7 días cercanos al inicio del torneo ({fechaInicio:dd/MM/yyyy}).");
             }
 
-            // 3. Crear la entidad en la base de datos
+            // 3. Crear Entidad (sin PDF aún para tener el ID)
             var eval = new EvaluacionTorneo
             {
                 PatinadorId = request.PatinadorId,
                 TorneoId = request.TorneoId,
                 FechaEvaluacion = request.Fecha,
-                ArchivoPdfUrl = pdfUrl,               // Guardamos la URL generada
+                ArchivoPdfUrl = null,
                 ObservacionesGenerales = request.Observaciones
             };
 
-            _db.EvaluacionesTorneos.Add(eval);
-            await _db.SaveChangesAsync();
+            // Usamos transacción para asegurar consistencia
+            using var transaction = await _db.Database.BeginTransactionAsync();
+            try
+            {
+                _db.EvaluacionesTorneos.Add(eval);
+                await _db.SaveChangesAsync(); // Obtenemos ID aquí
 
-            // Retornamos el objeto creado
+                // 4. Procesar el archivo PDF (si existe)
+                if (request.ArchivoPdf != null)
+                {
+                    if (request.ArchivoPdf.Length > 10 * 1024 * 1024)
+                        throw new Exception("El archivo excede el límite de 10MB.");
+
+                    if (request.ArchivoPdf.ContentType != "application/pdf")
+                         throw new Exception("Solo se permiten archivos PDF.");
+
+                    // Nombre estándar: eva_{EvaluacionId}.pdf
+                    var fileName = $"eva_{eval.EvaluacionTorneoId}.pdf";
+                    
+                    var folderPath = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", "evaluaciones");
+                    Directory.CreateDirectory(folderPath);
+
+                    var fullPath = Path.Combine(folderPath, fileName);
+
+                    using (var stream = new FileStream(fullPath, FileMode.Create))
+                    {
+                        await request.ArchivoPdf.CopyToAsync(stream);
+                    }
+
+                    var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                    eval.ArchivoPdfUrl = $"{baseUrl}/uploads/evaluaciones/{fileName}";
+                    
+                    await _db.SaveChangesAsync(); // Actualizamos URL
+                }
+
+                await transaction.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(500, $"Error al guardar evaluación: {ex.Message}");
+            }
+
             return CreatedAtAction(nameof(GetById), new { id = eval.EvaluacionTorneoId }, eval);
         }
 

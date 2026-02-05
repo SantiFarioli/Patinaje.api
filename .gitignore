@@ -39,3 +39,6 @@ TestResults/
 ## Others
 *.db
 appsettings.json
+*.docx
+
+

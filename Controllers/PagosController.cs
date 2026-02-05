@@ -10,7 +10,13 @@ using Patinaje.API.Data;
 public class PagosController : ControllerBase
 {
     private readonly AppPatinContext _db;
-    public PagosController(AppPatinContext db) => _db = db;
+    private readonly IWebHostEnvironment _env;
+
+    public PagosController(AppPatinContext db, IWebHostEnvironment env)
+    {
+        _db = db;
+        _env = env;
+    }
 
     public record PagoCreateDto(
         int PatinadorId,
@@ -144,5 +150,54 @@ public class PagosController : ControllerBase
             .ToListAsync();
 
         return Ok(lista);
+    }
+
+    // POST: api/pagos/{id}/comprobante
+    [HttpPost("{id:int}/comprobante")]
+    [RequestSizeLimit(5 * 1024 * 1024)] // 5MB max
+    public async Task<IActionResult> UploadComprobante(int id, IFormFile file)
+    {
+        var pago = await _db.Pagos.FindAsync(id);
+        if (pago is null) return NotFound("Pago no encontrado");
+        
+        if (file is null || file.Length == 0) 
+            return BadRequest("Archivo no válido");
+
+        // Validar extensión
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        var allowed = new[] { ".jpg", ".jpeg", ".png", ".pdf" };
+        if (!allowed.Contains(ext))
+            return BadRequest("Formato no permitido. Use JPG, PNG o PDF.");
+
+        try
+        {
+            var folderPath = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", "comprobantes");
+            Directory.CreateDirectory(folderPath);
+
+            // Nombre: pago_{id}_{timestamp}.ext para evitar caché y duplicados
+            var fileName = $"pago_{id}_{DateTime.Now.Ticks}{ext}";
+            var fullPath = Path.Combine(folderPath, fileName);
+
+            using (var stream = new FileStream(fullPath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var url = $"{baseUrl}/uploads/comprobantes/{fileName}";
+
+            pago.LinkComprobante = url;
+            // Si suben comprobante, asumimos que se pagó? 
+            // Mejor dejar que el cliente llame a 'MarcarPagado' o actualizar estado aqui:
+            // pago.Estado = "Pagado"; // Opcional, depende del flujo. Lo dejo manual para no invadir.
+            
+            await _db.SaveChangesAsync();
+
+            return Ok(new { pago.PagoId, LinkComprobante = url });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error al subir comprobante: {ex.Message}");
+        }
     }
 }
