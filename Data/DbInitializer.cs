@@ -145,15 +145,25 @@ public static class DbInitializer
             await db.SaveChangesAsync();
         }
 
-        // ========================== PAGOS ==========================
+        // ========================== PAGOS (Actualizado para el Súper Guion) ==========================
         if (!db.Pagos.Any())
         {
             var now = DateTime.Today;
+
+            // --- 👧 Pagos de Camila (Historial visual para la Demo) ---
+            // Historial Pagado (Verde)
+            db.Pagos.Add(new Pago { PatinadorId = cami.PatinadorId, Concepto = "Cuota Julio", Monto = 15000, Estado = "Pagado", FechaVencimiento = now.AddMonths(-2), FechaPago = now.AddMonths(-2).AddDays(-5) });
             db.Pagos.Add(new Pago { PatinadorId = cami.PatinadorId, Concepto = "Cuota Agosto", Monto = 15000, Estado = "Pagado", FechaVencimiento = now.AddMonths(-1), FechaPago = now.AddMonths(-1).AddDays(-2) });
-            db.Pagos.Add(new Pago { PatinadorId = lucia.PatinadorId, Concepto = "Inscripción Torneo", Monto = 25000, Estado = "Pagado", FechaVencimiento = now.AddDays(-10), FechaPago = now.AddDays(-12) });
+            
+            // Deudas Actuales (Rojo)
             db.Pagos.Add(new Pago { PatinadorId = cami.PatinadorId, Concepto = "Cuota Septiembre", Monto = 18000, Estado = "Pendiente", FechaVencimiento = now.AddDays(5) });
+            db.Pagos.Add(new Pago { PatinadorId = cami.PatinadorId, Concepto = "Inscripción Torneo Apertura", Monto = 12000, Estado = "Pendiente", FechaVencimiento = now.AddDays(15) });
+
+            // --- 👧 Pagos de otras patinadoras ---
+            db.Pagos.Add(new Pago { PatinadorId = lucia.PatinadorId, Concepto = "Inscripción Torneo", Monto = 25000, Estado = "Pagado", FechaVencimiento = now.AddDays(-10), FechaPago = now.AddDays(-12) });
             db.Pagos.Add(new Pago { PatinadorId = sofi.PatinadorId, Concepto = "Cuota Septiembre", Monto = 18000, Estado = "Pendiente", FechaVencimiento = now.AddDays(5) });
             db.Pagos.Add(new Pago { PatinadorId = lola.PatinadorId, Concepto = "Malla Competición", Monto = 45000, Estado = "Pendiente", FechaVencimiento = now.AddDays(10) });
+
             await db.SaveChangesAsync();
         }
 
